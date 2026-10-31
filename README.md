@@ -11,6 +11,11 @@ The schedule is stored **on the phone** (browser storage). This repository holds
 3. Open **CJ Schedule** from your Home Screen.
 4. Tap **Restore from backup** and pick your `cj-schedule-backup-….json` file. Do this inside the Home Screen app, because Safari and the installed app keep separate data.
 
+## Help inside the app
+
+- A short guided tour runs the first time the app has a schedule.
+- Tap **?** in the top bar for the full guide, or to take the tour again.
+
 ## Weekly use
 
 - Use the arrows to move to next week, then tap **Copy last week** or **Use standard schedule**.

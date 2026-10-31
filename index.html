@@ -196,13 +196,44 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center}
 
+/* help guide */
+.helpbtn{font-family:var(--f-display);font-weight:800;font-size:17px;color:var(--accent)}
+.panel.guide{width:min(620px,100%);gap:12px}
+.guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.guide details{border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.guide summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:700;font-size:15.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"+";font-family:var(--f-data);font-size:18px;color:var(--muted)}
+.guide details[open] summary::after{content:"–"}
+.guide .body{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.guide .body p{margin:0;color:var(--muted)}
+.guide .body ol,.guide .body ul{margin:0;padding-left:1.25em;display:grid;gap:5px}
+.guide b{font-weight:700;color:var(--ink)}
+.legend{list-style:none;padding:0!important;display:grid;gap:6px}
+.legend li{display:flex;align-items:center;gap:10px}
+.legend i{width:30px;height:8px;border-radius:4px;flex:none}
+
+/* guided tour */
+.tour{position:fixed;inset:0;z-index:40}
+.tour-hole{position:fixed;border-radius:12px;box-shadow:0 0 0 200vmax rgba(8,11,15,.62);outline:2px solid var(--accent);outline-offset:2px;pointer-events:none;transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease}
+.tour-card{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));max-width:400px;margin:0 auto;background:var(--surface);color:var(--ink);border-radius:14px;padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px}
+.tour-step{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+.tour-card h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:19px;line-height:1.2}
+.tour-card p{margin:0;font-size:14.5px;color:var(--muted)}
+.tour-nav{display:flex;align-items:center;gap:8px;margin-top:6px}
+.tour-nav .grow{flex:1}
+.tour-skip{border:0;background:transparent;color:var(--muted);font-weight:600;font-size:13.5px;padding:8px 4px}
+.tour-dots{display:flex;gap:4px}
+.tour-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.tour-dots i.on{background:var(--accent)}
+
 @media (max-width:760px){
   .grid{grid-template-columns:1fr;min-width:0}
   .shifts{padding:8px 8px 4px}
   .big .num{font-size:46px}
   .weeklabel{min-width:0;flex:1}
   .weeknav{flex:1;order:3;flex-basis:100%}
-  .sheet{align-items:flex-end;padding:0}
+  .sheet{align-items:flex-end;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 0}
   .panel{border-radius:16px 16px 0 0;width:100%;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:600px){ .dcol{display:none} th,td{padding:9px 10px} }
@@ -220,7 +251,8 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
       <button class="circle" id="nextWeek" aria-label="Next week"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="btn" id="thisWeek">This week</button>
     </div>
-    <span class="status" id="status">Saved on this phone</span>
+    <span class="status" id="status">Saved</span>
+    <button class="circle helpbtn" id="helpBtn" aria-label="How to use this app">?</button>
   </div>
 </header>
 
@@ -339,6 +371,120 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
     <p>Automatic copy didn’t work. Select the text below and copy it.</p>
     <textarea class="copyfallback" id="copyArea" readonly></textarea>
     <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Done</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="helpSheet" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="panel guide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="guide-head">
+      <h2 id="helpTitle">How to use CJ Schedule</h2>
+      <button class="btn primary" type="button" id="startTour">Take the tour</button>
+    </div>
+
+    <details open>
+      <summary>Plan a new week</summary>
+      <div class="body">
+        <ol>
+          <li>Tap <b>›</b> next to the week to move to next week.</li>
+          <li>Tap <b>Copy last week</b> or <b>Use standard schedule</b>.</li>
+          <li>Adjust shifts for time off and swaps.</li>
+        </ol>
+        <p>Changes save on this phone as you make them. There is no Save button.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Add, change or delete a shift</summary>
+      <div class="body">
+        <ul>
+          <li><b>Add:</b> tap <b>+ Add shift</b> under the day.</li>
+          <li><b>Change:</b> tap the shift, then change the person, day or times. Tap a time chip like <b>5:30a–12p</b> to fill both times at once.</li>
+          <li><b>Move to another day:</b> open the shift and change <b>Day</b>.</li>
+          <li><b>Delete:</b> open the shift, tap <b>Delete</b>, then tap it again to confirm.</li>
+          <li><b>New hire:</b> choose <b>+ New person…</b> in the Crew member list. They’re added to your crew.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Read the hours</summary>
+      <div class="body">
+        <ul>
+          <li><b>Big number:</b> total scheduled hours for the week.</li>
+          <li><b>Paid hours:</b> scheduled hours minus the unpaid 30-minute meal on any shift over 6 hours.</li>
+          <li><b>Hours this week:</b> each person’s hours by day, number of shifts, total and paid. Turn your phone sideways to see every day.</li>
+          <li><b>Orange flags</b> at the top warn about shifts over 8 h, anyone over 40 paid hours, double-booking, and times nobody is on.</li>
+        </ul>
+        <p>The bar under each day shows how many people are working through the day:</p>
+        <ul class="legend">
+          <li><i style="background:var(--cov1)"></i>1 person on</li>
+          <li><i style="background:var(--cov2)"></i>2 people on</li>
+          <li><i style="background:var(--cov3)"></i>3 or more</li>
+          <li><i style="background:var(--gap)"></i>Nobody on, between opening and closing</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Share the schedule</summary>
+      <div class="body">
+        <ul>
+          <li><b>Copy for group text:</b> copies the whole week. Paste it into your crew’s group chat.</li>
+          <li><b>Export CSV:</b> opens the share sheet. Save it to Files or send it to payroll. It opens in Excel or Numbers.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Standard schedule and crew</summary>
+      <div class="body">
+        <ul>
+          <li><b>Standard schedule</b> is your usual week. Set up a week the way you like it, then tap <b>Save as standard</b>. <b>Use standard schedule</b> loads it into any week.</li>
+          <li><b>Crew:</b> add names in the Crew card. Tap <b>×</b> to remove someone. Their past shifts stay.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Back up your schedule</summary>
+      <div class="body">
+        <ul>
+          <li>Your schedule is saved <b>only on this phone</b>. Deleting the app from your Home Screen deletes it.</li>
+          <li>Tap <b>Back up now</b> every couple of weeks and save the file to <b>iCloud Drive</b>.</li>
+          <li><b>New phone:</b> install the app, open it from the Home Screen, then tap <b>Restore from backup</b>.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Install and updates</summary>
+      <div class="body">
+        <ul>
+          <li><b>Install:</b> open the app’s link in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.</li>
+          <li>Safari and the Home Screen app keep <b>separate</b> data. Use the Home Screen app.</li>
+          <li>The app works offline. When you’re online, it picks up updates the next time you open it, and your schedule stays.</li>
+        </ul>
+      </div>
+    </details>
+
+    <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Close</button></div>
+  </div>
+</div>
+
+<div class="tour" id="tour" hidden role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+  <div class="tour-hole" id="tourHole"></div>
+  <div class="tour-card" id="tourCard">
+    <span class="tour-step" id="tourStep">Step 1 of 9</span>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="tour-nav">
+      <button class="tour-skip" type="button" id="tourSkip">Skip tour</button>
+      <span class="tour-dots" id="tourDots" aria-hidden="true"></span>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="tourBack">Back</button>
+      <button class="btn primary" type="button" id="tourNext">Next</button>
+    </div>
   </div>
 </div>
 
@@ -492,7 +638,8 @@ function renderTop(){
   $('#weekLabel').innerHTML='<span>Week of</span>'+esc(weekLabel(S.weekId));
   var st=$('#status');
   st.className='status'+(saveFailed?' bad':'');
-  st.textContent=saveFailed?'Not saved':'Saved on this phone';
+  st.textContent=saveFailed?'Not saved':'Saved';
+  st.title=saveFailed?'Couldn’t save on this phone':'Saved on this phone';
 }
 function renderSummary(c){
   $('#sumHours').textContent=fh(c.total);
@@ -661,7 +808,7 @@ $('#fDelete').addEventListener('click',function(){
 document.addEventListener('click',function(e){
   if(e.target.closest('[data-close]')){var sh=e.target.closest('.sheet');if(sh===sheet)closeEditor();else if(sh)sh.hidden=true;}
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!sheet.hidden)closeEditor();$('#copySheet').hidden=true;$('#confirmSheet').hidden=true;}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!sheet.hidden)closeEditor();$('#copySheet').hidden=true;$('#confirmSheet').hidden=true;$('#helpSheet').hidden=true;}});
 
 /* grid clicks */
 $('#grid').addEventListener('click',function(e){
@@ -759,7 +906,7 @@ $('#backupNow').addEventListener('click',backupNow);
 function pickRestore(){var f=$('#restoreFile');f.value='';f.click();}
 $('#restore').addEventListener('click',pickRestore);
 $('#welcomeRestore').addEventListener('click',pickRestore);
-$('#welcomeBlank').addEventListener('click',function(){store.started=true;writeStore();render();});
+$('#welcomeBlank').addEventListener('click',function(){store.started=true;writeStore();render();maybeTour();});
 var pending=null;
 $('#restoreFile').addEventListener('change',function(){
   var file=this.files&&this.files[0];if(!file)return;
@@ -782,6 +929,7 @@ $('#confirmOk').addEventListener('click',function(){if(pending){applyRestore(pen
 function applyRestore(incoming){
   store=incoming;writeStore();S.days=cloneDays(store.weeks[S.weekId]);render();
   toast('Restored '+store.crew.length+' crew and '+Object.keys(store.weeks).length+' weeks');
+  maybeTour();
 }
 
 /* crew list */
@@ -794,6 +942,81 @@ $('#crew').addEventListener('click',function(e){
   var n=b.dataset.remove;store.crew=store.crew.filter(function(m){return m.name!==n;});writeStore();render();
   toast(n+' removed from the crew list. Their existing shifts stay.');
 });
+
+/* help guide */
+$('#helpBtn').addEventListener('click',function(){closeEditor();$('#helpSheet').hidden=false;});
+$('#startTour').addEventListener('click',function(){$('#helpSheet').hidden=true;startTour();});
+
+/* guided tour */
+var TOURKEY='cjcrew.tourDone';
+var TOUR=[
+  {sel:'.weeknav',t:'Move between weeks',p:'Tap ‹ and › to go back or ahead a week. This week jumps back to the current week.'},
+  {sel:'.summary',t:'Your weekly hours',p:'Total scheduled hours, paid hours after unpaid meals, and how many shifts and people. Orange flags show up here when something needs a look.'},
+  {sel:'#actions',t:'Plan a week fast',p:'On a new week, tap Copy last week or Use standard schedule, then adjust. Copy for group text and Export CSV share it.'},
+  {sel:'#grid .day',t:'Each day at a glance',p:'Hours and crew count up top. The bar shows how many people are on through the day; red means nobody is. Tap any shift to change or delete it.'},
+  {sel:'#grid .add',t:'Add a shift',p:'Pick the person and the times. The time chips fill in your usual shifts with one tap.'},
+  {sel:'section[aria-labelledby="hoursTitle"]',t:'Hours by person',p:'Each person’s hours by day, their total, and paid hours. Use this for payroll.'},
+  {sel:'section[aria-labelledby="crewTitle"]',t:'Your crew',p:'Add or remove people here. Each person keeps the same color across the schedule.'},
+  {sel:'section[aria-labelledby="backupTitle"]',t:'Back up your schedule',p:'Your schedule lives only on this phone. Tap Back up now every couple of weeks and save the file to iCloud Drive.'},
+  {sel:'#helpBtn',t:'Help anytime',p:'Tap ? for the full guide, or to take this tour again.'}
+];
+var tourI=0,tourOn=false,tourT=null;
+var reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function startTour(){
+  closeEditor();['#helpSheet','#confirmSheet','#copySheet'].forEach(function(s){$(s).hidden=true;});
+  tourOn=true;tourI=0;$('#tour').hidden=false;showStep();
+  setTimeout(function(){$('#tourNext').focus();},50);
+}
+function endTour(){
+  tourOn=false;$('#tour').hidden=true;clearTimeout(tourT);
+  try{localStorage.setItem(TOURKEY,'1');}catch(e){}
+}
+function showStep(){
+  var st=TOUR[tourI],el=document.querySelector(st.sel);
+  $('#tourStep').textContent='Step '+(tourI+1)+' of '+TOUR.length;
+  $('#tourTitle').textContent=st.t;
+  $('#tourText').textContent=st.p;
+  $('#tourDots').innerHTML=TOUR.map(function(_,i){return '<i class="'+(i===tourI?'on':'')+'"></i>';}).join('');
+  $('#tourBack').hidden=tourI===0;
+  $('#tourNext').textContent=tourI===TOUR.length-1?'Done':'Next';
+  if(el&&!$('.top').contains(el)){
+    // put the target just below the sticky header, leaving room under it for the card when it fits
+    var r=el.getBoundingClientRect(),hdr=$('.top').getBoundingClientRect().bottom;
+    window.scrollTo({top:Math.max(0,window.scrollY+r.top-hdr-14),behavior:reduceMotion?'auto':'smooth'});
+  }
+  placeTour();clearTimeout(tourT);tourT=setTimeout(placeTour,reduceMotion?20:420);
+}
+function placeTour(){
+  if(!tourOn)return;
+  var el=document.querySelector(TOUR[tourI].sel),hole=$('#tourHole'),card=$('#tourCard');
+  var vh=window.innerHeight,vw=document.documentElement.clientWidth;
+  if(!el){hole.style.width=hole.style.height='0px';card.style.top=Math.max(16,(vh-card.offsetHeight)/2)+'px';return;}
+  var r=el.getBoundingClientRect(),pad=6,hb=$('.top').contains(el)?8:$('.top').getBoundingClientRect().bottom+4;
+  var top=Math.max(r.top-pad,hb),bot=Math.min(r.bottom+pad,vh-8),left=Math.max(r.left-pad,6),right=Math.min(r.right+pad,vw-6);
+  hole.style.top=top+'px';hole.style.left=left+'px';hole.style.width=Math.max(right-left,0)+'px';hole.style.height=Math.max(bot-top,0)+'px';
+  var ch=card.offsetHeight;
+  if(vh-bot>=ch+24)card.style.top=(bot+12)+'px';
+  else if(top>=ch+24)card.style.top=(top-12-ch)+'px';
+  else card.style.top=Math.max(16,vh-ch-28)+'px';
+}
+$('#tourNext').addEventListener('click',function(){
+  if(tourI<TOUR.length-1){tourI++;showStep();}
+  else{endTour();toast('Tap ? anytime for help');}
+});
+$('#tourBack').addEventListener('click',function(){if(tourI>0){tourI--;showStep();}});
+$('#tourSkip').addEventListener('click',endTour);
+window.addEventListener('resize',function(){if(tourOn)requestAnimationFrame(placeTour);});
+window.addEventListener('scroll',function(){if(tourOn)requestAnimationFrame(placeTour);},{passive:true});
+document.addEventListener('keydown',function(e){
+  if(!tourOn)return;
+  if(e.key==='Escape')endTour();
+  else if(e.key==='ArrowRight')$('#tourNext').click();
+  else if(e.key==='ArrowLeft')$('#tourBack').click();
+});
+function maybeTour(){
+  var done=false;try{done=localStorage.getItem(TOURKEY)==='1';}catch(e){}
+  if(!done&&store.started)setTimeout(function(){if(!tourOn&&sheet.hidden)startTour();},700);
+}
 
 /* install tip: iPhone/iPad Safari, not yet installed */
 (function(){
@@ -811,6 +1034,7 @@ window.addEventListener('storage',function(e){if(e.key===KEY){store=readStore();
 (function(){var h=location.hash.slice(1);S.weekId=/^\d{4}-\d{2}-\d{2}$/.test(h)?iso(mondayOf(parseIso(h))):iso(mondayOf(new Date()));})();
 S.days=cloneDays(store.weeks[S.weekId]);
 render();
+maybeTour();
 
 /* offline support */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){

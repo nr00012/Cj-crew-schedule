@@ -1,6 +1,6 @@
 // CJ Crew Schedule — offline support.
 // Bump VERSION whenever index.html or the icons change so phones pick up the update.
-const VERSION = 'cj-shell-v1';
+const VERSION = 'cj-shell-v2';
 const FONTS = 'cj-fonts';
 const SHELL = [
   './',
@@ -35,8 +35,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put('./index.html', copy)); }
-          return res;
+          if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put('./index.html', copy)); return res; }
+          // Site briefly unavailable (e.g. a 404 while GitHub rebuilds): keep opening the saved copy.
+          return caches.match('./index.html').then((hit) => hit || res);
         })
         .catch(() => caches.match('./index.html'))
     );
