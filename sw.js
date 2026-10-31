@@ -1,6 +1,6 @@
 // CJ Crew Schedule — offline support.
 // Bump VERSION whenever index.html or the icons change so phones pick up the update.
-const VERSION = 'cj-shell-v2';
+const VERSION = 'cj-shell-v3';
 const FONTS = 'cj-fonts';
 const SHELL = [
   './',

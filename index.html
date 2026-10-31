@@ -107,14 +107,14 @@ main.wrap{display:flex;flex-direction:column;gap:22px;padding-block:20px 48px}
 
 /* roster grid */
 .gridscroll{overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-.grid{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:10px;min-width:1120px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
 .day{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
 .day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .dayhead{padding:10px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:0 8px;align-items:baseline}
 .dn{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:-.01em}
 .dn em{font-style:normal;font-family:var(--f-body);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-left:6px;vertical-align:3px}
 .dd{color:var(--muted);font-size:12.5px;grid-column:1}
-.dt{font-family:var(--f-data);font-weight:600;font-size:14px;text-align:right;grid-row:1;grid-column:2}
+.dt{font-family:var(--f-data);font-weight:600;font-size:14px;text-align:right;grid-row:1;grid-column:2;white-space:nowrap}
 .dc{font-size:12px;color:var(--muted);text-align:right;grid-column:2}
 .cov{grid-column:1/-1;display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--sunk);margin-top:9px}
 .cov i{flex:1}
@@ -196,6 +196,20 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center}
 
+/* week at a glance */
+.glance{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.glance .gh{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+.glance .gh h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:20px}
+.glance .gh span{display:block;color:var(--muted);font-size:13px}
+.grow7{display:grid;grid-template-columns:4.6em 1fr auto;gap:6px 10px;padding:9px 14px;border-bottom:1px solid var(--line);align-items:start}
+.grow7:last-child{border-bottom:0}
+.grow7 .gd{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1.15}
+.grow7 .gd small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted)}
+.grow7 .gs{display:flex;flex-wrap:wrap;gap:5px}
+.grow7 .gs b{font-weight:600;font-size:13px;background:var(--pb);color:var(--pf);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.grow7 .gs em{font-style:normal;color:var(--muted);font-size:13px}
+.grow7 .gt{font-family:var(--f-data);font-weight:600;font-size:13px;text-align:right}
+.grow7.today{background:var(--accent-soft)}
 /* help guide */
 .helpbtn{font-family:var(--f-display);font-weight:800;font-size:17px;color:var(--accent)}
 .panel.guide{width:min(620px,100%);gap:12px}
@@ -228,7 +242,7 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
 .tour-dots i.on{background:var(--accent)}
 
 @media (max-width:760px){
-  .grid{grid-template-columns:1fr;min-width:0}
+  .grid{grid-template-columns:1fr}
   .shifts{padding:8px 8px 4px}
   .big .num{font-size:46px}
   .weeklabel{min-width:0;flex:1}
@@ -286,6 +300,7 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
     <button class="btn" id="useStandard">Use standard schedule</button>
     <button class="btn" id="saveStandard">Save as standard</button>
     <span class="sep"></span>
+    <button class="btn primary" id="shareImg">Share picture</button>
     <button class="btn" id="copyText">Copy for group text</button>
     <button class="btn" id="csv">Export CSV</button>
     <button class="btn danger" id="clearWeek">Clear week</button>
@@ -297,6 +312,15 @@ input[type=text],input[type=time],select{border:1px solid var(--line);background
     <button class="btn" id="emptyCopy">Copy last week</button>
   </div>
 
+  <section class="glance" aria-labelledby="glanceTitle">
+    <div class="gh">
+      <div><h2 id="glanceTitle">Week at a glance</h2><span id="glanceWeek"></span></div>
+      <div class="row"><button class="btn primary" id="shareImg2">Share picture</button><button class="btn" id="copyText2">Copy text</button></div>
+    </div>
+    <div id="glance"></div>
+  </section>
+
+  <div class="sh"><h2>Day details</h2><span>Tap a shift to edit</span></div>
   <div class="gridscroll"><div class="grid" id="grid"></div></div>
 
   <section aria-labelledby="hoursTitle">
@@ -631,7 +655,7 @@ function compute(){
 /* rendering */
 function render(){
   var c=compute();
-  renderTop();renderSummary(c);renderGrid(c);renderHours(c);renderCrew();renderActions(c);renderBackup();
+  renderTop();renderSummary(c);renderGlance(c);renderGrid(c);renderHours(c);renderCrew();renderActions(c);renderBackup();
   $('#welcome').hidden=store.started;
 }
 function renderTop(){
@@ -647,6 +671,16 @@ function renderSummary(c){
   $('#sumShifts').textContent=c.shifts;
   $('#sumCrew').textContent=c.people.filter(function(p){return p.shifts>0;}).length;
   $('#alerts').innerHTML=c.alerts.slice(0,8).map(function(a){return '<li>'+esc(a)+'</li>';}).join('');
+}
+function renderGlance(c){
+  var wk=parseIso(S.weekId),today=iso(new Date());
+  $('#glanceWeek').textContent=weekLabel(S.weekId)+' · '+fh(c.total)+' h scheduled';
+  $('#glance').innerHTML=DAYS.map(function(D,i){
+    var d=addDays(wk,i),k=D[0],list=S.days[k];
+    var chips=list.length?list.map(function(s){var a=toMin(s.start),b=toMin(s.end);
+      return '<b class="p'+colorFor(s.name)+'">'+esc(s.name)+' '+(a!=null&&b!=null?fmtShort(a)+'–'+fmtShort(b):'?')+'</b>';}).join(''):'<em>No shifts</em>';
+    return '<div class="grow7'+(iso(d)===today?' today':'')+'"><div class="gd">'+D[1]+'<small>'+MON[d.getMonth()]+' '+d.getDate()+'</small></div><div class="gs">'+chips+'</div><div class="gt">'+fh(c.dayTot[k].hrs)+'h</div></div>';
+  }).join('');
 }
 function renderGrid(c){
   var wk=parseIso(S.weekId),today=iso(new Date()),span=c.axB-c.axA;
@@ -876,14 +910,62 @@ function scheduleText(){
   lines.push('  Total: '+fh(c.total)+'h ('+fh(c.paid)+'h paid)');
   return lines.join('\n');
 }
-$('#copyText').addEventListener('click',function(){
+function copyWeekText(){
   var txt=scheduleText();
   function fallback(){var ta=$('#copyArea');ta.value=txt;$('#copySheet').hidden=false;setTimeout(function(){ta.focus();ta.select();},30);}
   try{
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast('Schedule copied. Paste it in your group text.');},fallback);
     else fallback();
   }catch(e){fallback();}
-});
+}
+$('#copyText').addEventListener('click',copyWeekText);
+$('#copyText2').addEventListener('click',copyWeekText);
+function weekPng(){
+  var c=compute(),wk=parseIso(S.weekId),W=1080,P=44,K=2;
+  var rows=DAYS.map(function(D,i){return {D:D,d:addDays(wk,i),list:S.days[D[0]]};});
+  var people=c.people.filter(function(p){return p.shifts;});
+  var H=96+rows.reduce(function(a,r){return a+Math.max(84,24+r.list.length*42);},0)+25+48+people.length*38+60;
+  var cv=document.createElement('canvas');cv.width=W*K;cv.height=H*K;
+  var x=cv.getContext('2d');x.scale(K,K);
+  var F='"Instrument Sans",-apple-system,Helvetica,Arial,sans-serif';
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  x.fillStyle='#8C4C1A';x.fillRect(0,0,W,96);
+  x.fillStyle='#fff';x.font='800 40px '+F;x.textBaseline='middle';x.fillText('CJ Crew Schedule',P,36);
+  x.font='500 24px '+F;x.fillText(weekLabel(S.weekId),P,72);
+  var y=96;
+  rows.forEach(function(r,i){
+    var h=Math.max(84,24+r.list.length*42);
+    if(i%2===0){x.fillStyle='#F7F3EE';x.fillRect(0,y,W,h);}
+    x.fillStyle='#1B2129';x.font='800 30px '+F;x.textBaseline='top';x.fillText(r.D[1],P,y+16);
+    x.fillStyle='#5B6571';x.font='500 22px '+F;x.fillText(MON[r.d.getMonth()]+' '+r.d.getDate(),P,y+52);
+    x.textBaseline='middle';
+    if(!r.list.length){x.fillStyle='#8A94A0';x.font='500 26px '+F;x.fillText('No shifts',200,y+h/2);}
+    r.list.forEach(function(s,j){var a=toMin(s.start),b=toMin(s.end),cy=y+12+j*42+21;
+      x.fillStyle='#1B2129';x.font='700 28px '+F;x.fillText(s.name,200,cy);
+      x.font='500 28px '+F;x.fillStyle='#3C4854';x.fillText(a!=null&&b!=null?fmtShort(a)+' – '+fmtShort(b):'?',430,cy);
+      x.fillStyle='#5B6571';x.font='500 24px '+F;x.textAlign='right';x.fillText(fh(hrsOf(s))+'h',W-P,cy);x.textAlign='left';});
+    y+=h;
+  });
+  x.fillStyle='#8C4C1A';x.fillRect(0,y,W,3);y+=22;
+  x.fillStyle='#1B2129';x.font='800 28px '+F;x.textBaseline='top';x.fillText('Hours this week',P,y);y+=48;
+  x.textBaseline='middle';
+  people.forEach(function(p){x.fillStyle='#1B2129';x.font='600 26px '+F;x.fillText(p.name,P,y+14);
+    x.textAlign='right';x.fillText(fh(p.total)+'h',W-P,y+14);x.textAlign='left';y+=38;});
+  x.fillStyle='#8C4C1A';x.font='800 28px '+F;x.fillText('Total',P,y+22);x.textAlign='right';x.fillText(fh(c.total)+'h',W-P,y+22);x.textAlign='left';
+  return new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function shareImage(){
+  if(!countShifts(S.days)){toast('Add shifts first.');return;}
+  weekPng().then(function(blob){
+    var name='cj-schedule-'+S.weekId+'.png';
+    try{var f=new File([blob],name,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){return navigator.share({files:[f],title:'CJ Crew Schedule'}).catch(function(e){if(!e||e.name!=='AbortError')downloadBlob(blob,name);});}
+    }catch(e){}
+    downloadBlob(blob,name);toast('Picture saved');
+  });
+}
+$('#shareImg').addEventListener('click',shareImage);
+$('#shareImg2').addEventListener('click',shareImage);
 function csvCell(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
 $('#csv').addEventListener('click',function(){
   var wk=parseIso(S.weekId),rows=[['Week of','Day','Date','Name','Start','End','Hours','Paid hours','Rest breaks','Meal (min, unpaid)']];
