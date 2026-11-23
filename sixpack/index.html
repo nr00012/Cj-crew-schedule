@@ -181,6 +181,25 @@ p{color:var(--mut);margin:6px 0}
     <div class="note">BMI is a rough screening number. It does not separate muscle from fat, so also watch your waist and strength.</div>
   </div>
   <div class="card">
+    <h2>Heart rate &amp; blood pressure</h2>
+    <div class="meta">Type in your readings from your watch or cuff. Fill in any of them.</div>
+    <div class="stats" style="margin-bottom:8px">
+      <div class="stat"><b id="vHr">–</b><span>Avg heart rate</span></div>
+      <div class="stat"><b id="vBp">–</b><span>Blood pressure</span></div>
+      <div class="stat"><b id="vN">0</b><span>Readings</span></div>
+    </div>
+    <div class="row">
+      <input class="num" id="vHrIn" type="number" inputmode="numeric" placeholder="avg bpm" style="width:100px">
+      <input class="num" id="vSysIn" type="number" inputmode="numeric" placeholder="top" style="width:80px">
+      <span class="note" style="margin:0">/</span>
+      <input class="num" id="vDiaIn" type="number" inputmode="numeric" placeholder="bottom" style="width:80px">
+      <button id="vAdd">Add</button>
+    </div>
+    <div class="note" id="vMsg"></div>
+    <div id="vList" style="margin-top:6px"></div>
+    <div class="note">Big numbers show your last-7-readings average. This is for your own tracking, not medical advice. Talk to a doctor about readings that worry you.</div>
+  </div>
+  <div class="card">
     <h2>Waist measurement</h2>
     <div class="meta">Measure at the navel, same time of day. Inches.</div>
     <div class="row"><input class="num" id="waistIn" type="number" inputmode="decimal" step="0.1" placeholder="inches"><button id="waistAdd">Add</button></div>
@@ -233,7 +252,7 @@ var PLAN={
 var CYCLE=["Week 1: choose repeatable loads; leave 2–3 reps in reserve.","Week 2: add 1–2 reps to sets while keeping good form.","Week 3: when all reps are comfortable, add a small amount of resistance.","Week 4: maintain the load or reduce sets slightly if tired. Then repeat the cycle."];
 var DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 var KEY="sixpack-tracker-v1";
-var state={done:{},ex:{},log:[],w:{},waist:[],bw:[],height:null,start:null};
+var state={done:{},ex:{},log:[],w:{},waist:[],bw:[],vit:[],height:null,start:null};
 var sel=key(new Date());
 
 function key(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -258,6 +277,7 @@ function load(){
   if(!state.w)state.w={};
   if(!Array.isArray(state.waist))state.waist=[];
   if(!Array.isArray(state.bw))state.bw=[];
+  if(!Array.isArray(state.vit))state.vit=[];
   if(!state.start)state.start=key(mondayOf(new Date()));
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 }
@@ -286,6 +306,9 @@ function merge(a){
   var bs={};state.bw.forEach(function(x){bs[x.date]=1;});
   (a.bw||[]).forEach(function(x){if(!bs[x.date])state.bw.push(x);});
   state.bw.sort(function(p,q){return p.date<q.date?-1:1;});
+  var vs={};state.vit.forEach(function(x){vs[x.date]=1;});
+  (a.vit||[]).forEach(function(x){if(!vs[x.date])state.vit.push(x);});
+  state.vit.sort(function(p,q){return p.date<q.date?-1:1;});
   if(!state.height&&a.height)state.height=a.height;
 }
 function syncCloud(){if(!cloudDoc)return;try{cloudDoc.set({json:JSON.stringify(state)});}catch(e){}}
@@ -431,6 +454,7 @@ function renderProg(){
     hi.appendChild(c);
   }
   renderBody();
+  renderVitals();
   var wl=document.getElementById("waistList");wl.innerHTML="";
   var ws=state.waist.slice(-5).reverse();
   if(!ws.length)wl.textContent="No measurements yet.";
@@ -450,6 +474,7 @@ function renderProg(){
     var what=x.type==="exercise"?((x.value?"Done: ":"Unchecked: ")+x.exercise):
              x.type==="weight"?("Weight: "+x.exercise+" "+x.value+" lb"):
              x.type==="waist"?("Waist: "+x.value+" in"):
+             x.type==="vitals"?("Vitals: "+x.value):
              x.type==="bodyweight"?("Body weight: "+x.value+" lb"):
              (x.value?"Session marked done":"Session undone");
     r.textContent=when+" · "+what;el.appendChild(r);
@@ -486,6 +511,21 @@ function renderBody(){
     var bb=bmiOf(m.v);
     r.textContent=m.date+" · "+m.v+" lb"+(bb?" · BMI "+bb.toFixed(1):"")+(older?"  ("+((m.v-older.v)>0?"+":"")+(m.v-older.v).toFixed(1)+")":"");
     bl.appendChild(r);
+  });
+}
+function renderVitals(){
+  var v=state.vit,n=v.length;
+  var hrs=v.filter(function(x){return x.hr;}).slice(-7),bps=v.filter(function(x){return x.sys&&x.dia;}).slice(-7);
+  var avg=function(a,f){return a.reduce(function(t,x){return t+f(x);},0)/a.length;};
+  document.getElementById("vHr").textContent=hrs.length?Math.round(avg(hrs,function(x){return x.hr;})):"–";
+  document.getElementById("vBp").textContent=bps.length?Math.round(avg(bps,function(x){return x.sys;}))+"/"+Math.round(avg(bps,function(x){return x.dia;})):"–";
+  document.getElementById("vN").textContent=n;
+  var el=document.getElementById("vList");el.innerHTML="";
+  if(!n)el.textContent="No readings yet.";
+  v.slice(-5).reverse().forEach(function(x){
+    var r=document.createElement("div");r.className="lg";
+    var bits=[];if(x.hr)bits.push(x.hr+" bpm");if(x.sys&&x.dia)bits.push(x.sys+"/"+x.dia+" mmHg");
+    r.textContent=x.date+" · "+bits.join(" · ");el.appendChild(r);
   });
 }
 var tInt=null;
@@ -526,6 +566,21 @@ document.getElementById("htSave").onclick=function(){
   if(!(ft>0))return;
   state.height=ft*12+inch;save();
 };
+document.getElementById("vAdd").onclick=function(){
+  var hr=parseInt(document.getElementById("vHrIn").value,10),sys=parseInt(document.getElementById("vSysIn").value,10),dia=parseInt(document.getElementById("vDiaIn").value,10);
+  var msg=document.getElementById("vMsg");msg.textContent="";
+  var okHr=hr>=30&&hr<=220,okBp=sys>=70&&sys<=260&&dia>=40&&dia<=160&&sys>dia;
+  if(!okHr&&!okBp){msg.textContent="Enter a heart rate (30–220) and/or both blood pressure numbers (top higher than bottom).";return;}
+  var dk=key(new Date()),rec=null;
+  state.vit.forEach(function(x){if(x.date===dk)rec=x;});
+  if(!rec){rec={date:dk};state.vit.push(rec);}
+  if(okHr)rec.hr=hr;
+  if(okBp){rec.sys=sys;rec.dia=dia;}
+  state.vit.sort(function(a,b){return a.date<b.date?-1:1;});
+  addLog("vitals",dk,null,(okHr?hr+" bpm ":"")+(okBp?sys+"/"+dia:""));
+  document.getElementById("vHrIn").value="";document.getElementById("vSysIn").value="";document.getElementById("vDiaIn").value="";
+  save();
+};
 document.getElementById("waistAdd").onclick=function(){
   var inp=document.getElementById("waistIn"),v=parseFloat(inp.value);
   if(!(v>0))return;
@@ -543,7 +598,7 @@ document.getElementById("bkLoad").onclick=function(){
   try{
     var s=JSON.parse(document.getElementById("bk").value);
     if(!s||!s.done)throw 0;
-    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],bw:Array.isArray(s.bw)?s.bw:[],height:s.height||null,start:s.start||key(mondayOf(new Date()))};
+    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],bw:Array.isArray(s.bw)?s.bw:[],vit:Array.isArray(s.vit)?s.vit:[],height:s.height||null,start:s.start||key(mondayOf(new Date()))};
     save();render();note("Restored.");
   }catch(e){note("That text is not a valid backup.");}
 };
