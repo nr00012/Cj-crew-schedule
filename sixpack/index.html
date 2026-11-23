@@ -166,10 +166,48 @@ input[type=date].num{width:150px;color-scheme:dark}
     <h3>Adjust</h3><p>Reduce load if form slips · use an easier variation if needed · stop for sharp or unusual pain</p>
     <div class="note">General fitness guidance, not a medical assessment. If you have a chronic condition, significant symptoms or have been advised to restrict exercise, check with your healthcare professional before starting.</div>
   </div>
+
+  <div class="card">
+    <div class="kick">Body composition guide</div>
+    <p>Your weight is made of water, fat and skeletal muscle, plus bone, organs and other tissue. Tracking those parts tells you more than the scale alone.</p>
+    <h3>Weight</h3><p>Depends on age, sex, genetics, diet and activity. Adding muscle while losing fat can be a healthy change even if the scale barely moves.</p>
+    <h3>Skeletal muscle</h3><p>The muscle attached to your bones that you use to walk, run and lift.</p>
+    <h3>Fat mass</h3><p>Fat is needed for your brain, nerves, bone marrow, heart and cell membranes. Too much or too little can be a concern.</p>
+    <h3>Body water</h3><p>Usually about 50% to 70% of body weight. Muscular people tend to have a higher water percentage, and more body fat means a lower one. Exercise and heat change it, so weigh in the morning for steadier numbers.</p>
+    <h3>Body fat percentage</h3><p>Fat as a share of your weight. It is more useful than BMI because it separates fat from other mass.</p>
+    <h3>BMI</h3><p>A ratio of weight to height. It ignores body makeup, so a muscular person can have a high BMI with low body fat. Read it together with body fat and waist.</p>
+    <h3>BMR</h3><p>The energy your body uses at rest for things like heartbeat and breathing. Most of your daily calorie burn is this, plus activity on top.</p>
+  </div>
+  <div class="card">
+    <div class="kick">Sources &amp; how targets are calculated</div>
+    <h3>Healthy weight and BMI</h3><p>BMI 18.5 to under 25 (WHO / NIH). Healthy weight = BMI × height² ÷ 703, with weight in pounds and height in inches.</p>
+    <h3>Body fat %</h3><p>Gallagher et al., Am J Clin Nutr 2000;72:694-701, ranges linked to BMI 18.5 to 24.9. Men: 8–19.9% (age 20–39), 11–21.9% (40–59), 13–24.9% (60–79). Women: 21–32.9%, 23–33.9%, 24–35.9%. Samsung Health uses American College of Sports Medicine ranges, which differ somewhat, so follow your trend rather than one number.</p>
+    <h3>BMR</h3><p>Mifflin–St Jeor (Mifflin et al., Am J Clin Nutr 1990;51:241-247): 10 × kg + 6.25 × cm − 5 × age, then +5 for men or −161 for women. Daily needs are roughly BMR × 1.2 (sedentary), 1.375 (light), 1.55 (moderate), 1.725 (active).</p>
+    <h3>Waist</h3><p>Waist ÷ height of 0.4 to 0.49 is healthy. Keep your waist under half your height (NICE).</p>
+    <h3>Blood pressure</h3><p>American Heart Association / American College of Cardiology: normal is under 120/80; elevated 120–129 and under 80; stage 1 high 130–139 or 80–89; stage 2 high 140 or more, or 90 or more.</p>
+    <h3>Heart rate</h3><p>Normal resting rate for adults is 60 to 100 bpm (Mayo Clinic, Cleveland Clinic).</p>
+    <h3>Skeletal muscle and body water</h3><p>No single published formula here, so the app uses the ranges shown on your Samsung Health body composition screen (Nov 23, 2026): skeletal muscle 51.9–56.7 lb, body water 75.7–82.2 lb. Samsung bases them on your height, age and sex, so update them if your profile changes.</p>
+    <div class="note">Body composition from a watch or scale is an estimate and can vary with hydration and timing. These targets are for tracking, not diagnosis.</div>
+  </div>
 </div>
 
 <!-- PROGRESS -->
 <div id="vProg" class="hide">
+  <div class="card">
+    <h2>Profile</h2>
+    <div class="meta">Used only to calculate your targets. Stored on this phone.</div>
+    <div class="row">
+      <select class="num" id="sexSel" style="width:120px"><option value="">Sex</option><option value="m">Male</option><option value="f">Female</option></select>
+      <input class="num" id="byIn" type="number" inputmode="numeric" placeholder="birth year" style="width:120px">
+    </div>
+    <div class="row">
+      <span class="note" style="margin:0">Height:</span>
+      <input class="num" id="htFt" type="number" inputmode="numeric" placeholder="ft" style="width:70px">
+      <input class="num" id="htIn" type="number" inputmode="decimal" placeholder="in" style="width:70px">
+      <button id="htSave">Save</button>
+    </div>
+    <div class="note" id="pfMsg"></div>
+  </div>
   <div class="card">
     <h2>Last 5 weeks</h2>
     <div class="meta">Green = session done. Dashed = rest day.</div>
@@ -188,11 +226,11 @@ input[type=date].num{width:150px;color-scheme:dark}
     <svg id="bwChart" viewBox="0 0 300 110" style="width:100%;height:110px;display:none"></svg>
     <div class="row"><input class="num" id="bwDate" type="date"><input class="num" id="bwIn" type="number" inputmode="decimal" step="0.1" placeholder="weight lb" style="width:110px"><button id="bwAdd">Add</button></div>
     <div class="row">
-      <span class="note" style="margin:0">Height:</span>
-      <input class="num" id="htFt" type="number" inputmode="numeric" placeholder="ft" style="width:70px">
-      <input class="num" id="htIn" type="number" inputmode="decimal" placeholder="in" style="width:70px">
-      <button id="htSave">Save</button>
+      <input class="num" id="bfIn" type="number" inputmode="decimal" step="0.1" placeholder="body fat %" style="width:105px">
+      <input class="num" id="smIn" type="number" inputmode="decimal" step="0.1" placeholder="muscle lb" style="width:100px">
+      <input class="num" id="twIn" type="number" inputmode="decimal" step="0.1" placeholder="water lb" style="width:100px">
     </div>
+    <div class="note">Body fat, skeletal muscle and body water are optional. Copy them from Samsung Health with your weight.</div>
     <div id="bwList" style="margin-top:8px"></div>
     <div class="note">BMI is a rough screening number. It does not separate muscle from fat, so also watch your waist and strength.</div>
   </div>
@@ -271,7 +309,7 @@ var PLAN={
 var CYCLE=["Week 1: choose repeatable loads; leave 2–3 reps in reserve.","Week 2: add 1–2 reps to sets while keeping good form.","Week 3: when all reps are comfortable, add a small amount of resistance.","Week 4: maintain the load or reduce sets slightly if tired. Then repeat the cycle."];
 var DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 var KEY="sixpack-tracker-v1";
-var state={done:{},ex:{},log:[],w:{},waist:[],bw:[],vit:[],height:null,start:null};
+var state={done:{},ex:{},log:[],w:{},waist:[],bw:[],vit:[],profile:{},height:null,start:null};
 var sel=key(new Date());
 
 function key(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -297,6 +335,7 @@ function load(){
   if(!Array.isArray(state.waist))state.waist=[];
   if(!Array.isArray(state.bw))state.bw=[];
   if(!Array.isArray(state.vit))state.vit=[];
+  if(!state.profile)state.profile={};
   if(!state.start)state.start=key(mondayOf(new Date()));
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 }
@@ -329,6 +368,7 @@ function merge(a){
   (a.vit||[]).forEach(function(x){if(!vs[x.date])state.vit.push(x);});
   state.vit.sort(function(p,q){return p.date<q.date?-1:1;});
   if(!state.height&&a.height)state.height=a.height;
+  if(a.profile){state.profile=Object.assign({},a.profile,state.profile||{});}
 }
 function syncCloud(){if(!cloudDoc)return;try{cloudDoc.set({json:JSON.stringify(state)});}catch(e){}}
 function initCloud(){
@@ -495,12 +535,20 @@ function renderProg(){
              x.type==="weight"?("Weight: "+x.exercise+" "+x.value+" lb"):
              x.type==="waist"?("Waist: "+x.value+" in"):
              x.type==="vitals"?("Vitals: "+x.value):
-             x.type==="bodyweight"?("Body weight: "+x.value+" lb"):
+             x.type==="bodyweight"?("Body weight: "+(typeof x.value==="number"?x.value+" lb":x.value)):
              (x.value?"Session marked done":"Session undone");
     r.textContent=when+" · "+what;el.appendChild(r);
   });
 }
 
+var REF={sm:[51.9,56.7],tw:[75.7,82.2]};
+var BF={m:[[20,39,8,19.9],[40,59,11,21.9],[60,79,13,24.9]],f:[[20,39,21,32.9],[40,59,23,33.9],[60,79,24,35.9]]};
+function bfRange(sex,age){
+  var t=BF[sex];if(!t||!age)return null;
+  for(var i=0;i<t.length;i++){if(age>=t[i][0]&&age<=t[i][1])return [t[i][2],t[i][3]];}
+  return null;
+}
+function ageNow(){var y=state.profile&&state.profile.year;return y?(new Date().getFullYear()-y):null;}
 function dateOf(id){
   var el=document.getElementById(id),t=key(new Date());
   return (el&&el.value&&el.value<=t)?el.value:t;
@@ -521,7 +569,7 @@ function latestOf(arr,test){for(var i=arr.length-1;i>=0;i--){if(test(arr[i]))ret
 function bar(host,o){
   var wrap=document.createElement("div");wrap.className="tb";
   var below=o.lo!==null&&o.val<o.lo,above=o.hiIncl?o.val>o.hi:o.val>=o.hi;
-  var cls=below?"low":(above?"high":"ok");
+  var cls=below?"low":((above&&!o.highGood)?"high":"ok");
   var head=document.createElement("div");head.className="tbh";
   var ti=document.createElement("span");ti.textContent=o.title;
   var ch=document.createElement("span");ch.className="chip "+cls;ch.textContent=below?"Below range":(above?"Above range":"In range");
@@ -548,16 +596,32 @@ function renderTargets(){
   var h=state.height;
   var bb=document.getElementById("bwBars");bb.innerHTML="";
   var lw=latestOf(state.bw,function(){return true;});
-  if(!h)msg(bb,"Set your height below to see your healthy weight range and BMI target.");
+  if(!h)msg(bb,"Fill in your height in the Profile card at the top to see your healthy weight range and BMI target.");
   else if(!lw)msg(bb,"Add a weigh-in to see where you stand against your healthy range.");
   else{
     var k=h*h/703;
     bar(bb,{title:"Weight",val:lw.v,unit:"lb",dec:1,lo:18.5*k,hi:25*k,note:"Healthy weight for your height (BMI 18.5 to 25). Latest: "+fmtD(lw.date)+"."});
     bar(bb,{title:"BMI",val:bmiOf(lw.v),unit:"",dec:1,lo:18.5,hi:25,note:"Healthy BMI is 18.5 to under 25."});
+    var p=state.profile||{},age=ageNow();
+    var lbf=latestOf(state.bw,function(x){return x.bf;});
+    if(lbf){
+      var rg=bfRange(p.sex,age);
+      if(rg)bar(bb,{title:"Body fat",val:lbf.bf,unit:"%",dec:1,lo:rg[0],hi:rg[1]+0.1,note:"Healthy range for your sex and age (Gallagher 2000, linked to BMI 18.5 to 24.9). Latest: "+fmtD(lbf.date)+"."});
+      else msg(bb,"Fill in sex and birth year (ages 20 to 79) in the Profile card to see your body fat target.");
+      var fat=lbf.v*lbf.bf/100;
+      msg(bb,"Fat mass about "+fat.toFixed(1)+" lb · lean mass about "+(lbf.v-fat).toFixed(1)+" lb (from "+fmtD(lbf.date)+").");
+    }
+    var lsm=latestOf(state.bw,function(x){return x.sm;}),ltw=latestOf(state.bw,function(x){return x.tw;});
+    if(lsm)bar(bb,{title:"Skeletal muscle",val:lsm.sm,unit:"lb",dec:1,lo:REF.sm[0],hi:REF.sm[1],hiIncl:true,highGood:true,note:"Range from your Samsung Health screen. Latest: "+fmtD(lsm.date)+"."});
+    if(ltw)bar(bb,{title:"Body water",val:ltw.tw,unit:"lb",dec:1,lo:REF.tw[0],hi:REF.tw[1],hiIncl:true,note:"Range from your Samsung Health screen. Latest: "+fmtD(ltw.date)+"."});
+    if(p.sex&&age){
+      var bmr=10*lw.v*0.45359237+6.25*h*2.54-5*age+(p.sex==="m"?5:-161);
+      msg(bb,"Resting energy (BMR): about "+Math.round(bmr)+" kcal/day (Mifflin–St Jeor). Light activity ×1.375 is about "+Math.round(bmr*1.375)+"; moderate ×1.55 is about "+Math.round(bmr*1.55)+". Estimates only.");
+    }else msg(bb,"Fill in sex and birth year in the Profile card to see your BMR estimate.");
   }
   var wb=document.getElementById("waistBars");wb.innerHTML="";
   var lwa=latestOf(state.waist,function(){return true;});
-  if(!h)msg(wb,"Set your height (Body weight card) to see your healthy waist target.");
+  if(!h)msg(wb,"Fill in your height in the Profile card at the top to see your healthy waist target.");
   else if(!lwa)msg(wb,"Add a measurement to see your waist target. Healthy waist: under half your height.");
   else bar(wb,{title:"Waist",val:lwa.v,unit:"in",dec:1,lo:0.4*h,hi:0.5*h,note:"Healthy waist is under half your height (ratio 0.4 to 0.49). Your ratio: "+(lwa.v/h).toFixed(2)+". Latest: "+fmtD(lwa.date)+"."});
   var vb=document.getElementById("vBars");vb.innerHTML="";
@@ -584,6 +648,8 @@ function renderBody(){
   document.getElementById("bmiCat").textContent=b!==null?("BMI · "+bmiCat(b)):(now!==null?"BMI · set height":"BMI");
   var ch=n>1?(now-bw[0].v):null;
   document.getElementById("bwChg").textContent=ch!==null?((ch>0?"+":"")+ch.toFixed(1)):"–";
+  document.getElementById("sexSel").value=(state.profile&&state.profile.sex)||"";
+  document.getElementById("byIn").value=(state.profile&&state.profile.year)||"";
   if(state.height){document.getElementById("htFt").value=Math.floor(state.height/12);document.getElementById("htIn").value=+(state.height%12).toFixed(1);}
   var sv=document.getElementById("bwChart");
   if(n>1){
@@ -601,7 +667,7 @@ function renderBody(){
   bw.slice(-5).reverse().forEach(function(m,i){
     var older=bw[n-1-i-1];var r=document.createElement("div");r.className="lg";
     var bb=bmiOf(m.v);
-    r.textContent=m.date+" · "+m.v+" lb"+(bb?" · BMI "+bb.toFixed(1):"")+(older?"  ("+((m.v-older.v)>0?"+":"")+(m.v-older.v).toFixed(1)+")":"");
+    r.textContent=m.date+" · "+m.v+" lb"+(bb?" · BMI "+bb.toFixed(1):"")+(m.bf?" · "+m.bf+"% fat":"")+(older?"  ("+((m.v-older.v)>0?"+":"")+(m.v-older.v).toFixed(1)+")":"");
     bl.appendChild(withDel(r,function(){state.bw=state.bw.filter(function(x){return x.date!==m.date;});save();}));
   });
 }
@@ -649,14 +715,27 @@ document.getElementById("bwAdd").onclick=function(){
   var inp=document.getElementById("bwIn"),v=parseFloat(inp.value);
   if(!(v>0))return;
   var dk=dateOf("bwDate");
-  state.bw=state.bw.filter(function(x){return x.date!==dk;});
-  state.bw.push({date:dk,v:v});state.bw.sort(function(a,b){return a.date<b.date?-1:1;});
-  addLog("bodyweight",dk,null,v);inp.value="";initDates();save();
+  var rec=null;state.bw.forEach(function(x){if(x.date===dk)rec=x;});
+  if(!rec){rec={date:dk};state.bw.push(rec);}
+  rec.v=v;
+  var bf=parseFloat(document.getElementById("bfIn").value),sm=parseFloat(document.getElementById("smIn").value),tw=parseFloat(document.getElementById("twIn").value);
+  if(bf>=3&&bf<=60)rec.bf=bf;
+  if(sm>=20&&sm<=200)rec.sm=sm;
+  if(tw>=30&&tw<=250)rec.tw=tw;
+  state.bw.sort(function(a,b){return a.date<b.date?-1:1;});
+  addLog("bodyweight",dk,null,v+" lb"+(rec.bf?", "+rec.bf+"% fat":""));
+  inp.value="";["bfIn","smIn","twIn"].forEach(function(i){document.getElementById(i).value="";});initDates();save();
 };
 document.getElementById("htSave").onclick=function(){
   var ft=parseFloat(document.getElementById("htFt").value),inch=parseFloat(document.getElementById("htIn").value)||0;
-  if(!(ft>0))return;
-  state.height=ft*12+inch;save();
+  var yr=parseInt(document.getElementById("byIn").value,10),sx=document.getElementById("sexSel").value,pm=document.getElementById("pfMsg");
+  pm.textContent="";
+  if(ft>0)state.height=ft*12+inch;
+  state.profile=state.profile||{};
+  state.profile.sex=sx;
+  if(yr>=1920&&yr<=new Date().getFullYear())state.profile.year=yr;else if(document.getElementById("byIn").value)pm.textContent="Enter a 4-digit birth year.";
+  save();render();
+  if(!pm.textContent)pm.textContent="Saved.";
 };
 document.getElementById("vAdd").onclick=function(){
   var hr=parseInt(document.getElementById("vHrIn").value,10),sys=parseInt(document.getElementById("vSysIn").value,10),dia=parseInt(document.getElementById("vDiaIn").value,10);
@@ -690,7 +769,7 @@ document.getElementById("bkLoad").onclick=function(){
   try{
     var s=JSON.parse(document.getElementById("bk").value);
     if(!s||!s.done)throw 0;
-    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],bw:Array.isArray(s.bw)?s.bw:[],vit:Array.isArray(s.vit)?s.vit:[],height:s.height||null,start:s.start||key(mondayOf(new Date()))};
+    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],bw:Array.isArray(s.bw)?s.bw:[],vit:Array.isArray(s.vit)?s.vit:[],profile:s.profile||{},height:s.height||null,start:s.start||key(mondayOf(new Date()))};
     save();render();note("Restored.");
   }catch(e){note("That text is not a valid backup.");}
 };
