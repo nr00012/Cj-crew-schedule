@@ -71,6 +71,21 @@ ul{padding-left:20px;color:var(--mut);margin:6px 0}
 p{color:var(--mut);margin:6px 0}
 #timer{position:fixed;left:0;right:0;bottom:0;background:var(--acc);color:#151713;text-align:center;padding:16px;font-size:20px;font-weight:800;display:none}
 .hide{display:none}
+input[type=date].num{width:150px;color-scheme:dark}
+.tb{margin:10px 0 16px}
+.tbh{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.chip{font-size:12px;padding:3px 10px;border-radius:12px;font-weight:700}
+.chip.ok{background:#1e3d2a;color:#5fcf8a}.chip.low{background:#1d2f4d;color:#6ea8fe}.chip.high{background:#4a3513;color:#e6a23c}
+.tv{font-size:28px;font-weight:800;margin:2px 0 10px}
+.tv small{font-size:14px;color:var(--mut);font-weight:400;margin-left:4px}
+.tk{position:relative;height:10px;border-radius:5px;background:#2a3530;margin:0 0 4px}
+.tz{position:absolute;top:0;bottom:0;background:#3f9e66;border-radius:5px}
+.tmk{position:absolute;top:-4px;width:6px;height:18px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px #151e1b;transform:translateX(-3px)}
+.tl{position:relative;height:16px;font-size:12px;color:var(--mut)}
+.tl span{position:absolute;transform:translateX(-50%)}
+.tn{font-size:12px;color:var(--mut);margin-top:6px}
+.lg.dl{display:flex;justify-content:space-between;align-items:center}
+.lg button{padding:2px 9px;font-size:13px;background:transparent;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -169,8 +184,9 @@ p{color:var(--mut);margin:6px 0}
       <div class="stat"><b id="bmiNow">–</b><span id="bmiCat">BMI</span></div>
       <div class="stat"><b id="bwChg">–</b><span>Since start</span></div>
     </div>
+    <div id="bwBars"></div>
     <svg id="bwChart" viewBox="0 0 300 110" style="width:100%;height:110px;display:none"></svg>
-    <div class="row"><input class="num" id="bwIn" type="number" inputmode="decimal" step="0.1" placeholder="weight lb"><button id="bwAdd">Add</button></div>
+    <div class="row"><input class="num" id="bwDate" type="date"><input class="num" id="bwIn" type="number" inputmode="decimal" step="0.1" placeholder="weight lb" style="width:110px"><button id="bwAdd">Add</button></div>
     <div class="row">
       <span class="note" style="margin:0">Height:</span>
       <input class="num" id="htFt" type="number" inputmode="numeric" placeholder="ft" style="width:70px">
@@ -188,6 +204,8 @@ p{color:var(--mut);margin:6px 0}
       <div class="stat"><b id="vBp">–</b><span>Blood pressure</span></div>
       <div class="stat"><b id="vN">0</b><span>Readings</span></div>
     </div>
+    <div id="vBars"></div>
+    <div class="row"><input class="num" id="vDate" type="date"></div>
     <div class="row">
       <input class="num" id="vHrIn" type="number" inputmode="numeric" placeholder="avg bpm" style="width:100px">
       <input class="num" id="vSysIn" type="number" inputmode="numeric" placeholder="top" style="width:80px">
@@ -202,7 +220,8 @@ p{color:var(--mut);margin:6px 0}
   <div class="card">
     <h2>Waist measurement</h2>
     <div class="meta">Measure at the navel, same time of day. Inches.</div>
-    <div class="row"><input class="num" id="waistIn" type="number" inputmode="decimal" step="0.1" placeholder="inches"><button id="waistAdd">Add</button></div>
+    <div id="waistBars"></div>
+    <div class="row"><input class="num" id="waistDate" type="date"><input class="num" id="waistIn" type="number" inputmode="decimal" step="0.1" placeholder="inches" style="width:110px"><button id="waistAdd">Add</button></div>
     <div id="waistList" style="margin-top:8px"></div>
   </div>
   <div class="card">
@@ -455,6 +474,7 @@ function renderProg(){
   }
   renderBody();
   renderVitals();
+  renderTargets();
   var wl=document.getElementById("waistList");wl.innerHTML="";
   var ws=state.waist.slice(-5).reverse();
   if(!ws.length)wl.textContent="No measurements yet.";
@@ -463,7 +483,7 @@ function renderProg(){
     var older=state.waist[state.waist.length-1-i-1];
     var diff=older?(m.v-older.v):null;
     r.textContent=m.date+" · "+m.v+" in"+(diff!==null?"  ("+(diff>0?"+":"")+diff.toFixed(1)+")":"");
-    wl.appendChild(r);
+    wl.appendChild(withDel(r,function(){state.waist=state.waist.filter(function(x){return x.date!==m.date;});save();}));
   });
   var el=document.getElementById("logList");el.innerHTML="";
   var items=state.log.slice(-8).reverse();
@@ -481,6 +501,78 @@ function renderProg(){
   });
 }
 
+function dateOf(id){
+  var el=document.getElementById(id),t=key(new Date());
+  return (el&&el.value&&el.value<=t)?el.value:t;
+}
+function initDates(){
+  var t=key(new Date());
+  ["bwDate","waistDate","vDate"].forEach(function(id){var e=document.getElementById(id);if(e){e.value=t;e.max=t;}});
+}
+function withDel(row,fn){
+  var t=row.textContent;row.textContent="";row.className+=" dl";
+  var sp=document.createElement("span");sp.textContent=t;row.appendChild(sp);
+  var b=document.createElement("button");b.textContent="✕";b.setAttribute("aria-label","Delete entry");b.onclick=fn;row.appendChild(b);
+  return row;
+}
+function fmtD(k){return parse(k).toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+function latestOf(arr,test){for(var i=arr.length-1;i>=0;i--){if(test(arr[i]))return arr[i];}return null;}
+// o: title, val, unit, dec, lo (or null), hi, hiIncl, min, max, note
+function bar(host,o){
+  var wrap=document.createElement("div");wrap.className="tb";
+  var below=o.lo!==null&&o.val<o.lo,above=o.hiIncl?o.val>o.hi:o.val>=o.hi;
+  var cls=below?"low":(above?"high":"ok");
+  var head=document.createElement("div");head.className="tbh";
+  var ti=document.createElement("span");ti.textContent=o.title;
+  var ch=document.createElement("span");ch.className="chip "+cls;ch.textContent=below?"Below range":(above?"Above range":"In range");
+  head.appendChild(ti);head.appendChild(ch);wrap.appendChild(head);
+  var tv=document.createElement("div");tv.className="tv";tv.textContent=o.val.toFixed(o.dec);
+  var u=document.createElement("small");u.textContent=o.unit;tv.appendChild(u);wrap.appendChild(tv);
+  var span=o.hi-(o.lo!==null?o.lo:o.hi*0.8);
+  var mn=o.min!==undefined?o.min:o.lo-span*0.7,mx=o.max!==undefined?o.max:o.hi+span*0.9;
+  var pc=function(v){return Math.max(0,Math.min(100,(v-mn)/(mx-mn)*100));};
+  var tk=document.createElement("div");tk.className="tk";
+  var z=document.createElement("div");z.className="tz";
+  var zl=o.lo!==null?pc(o.lo):0;z.style.left=zl+"%";z.style.width=(pc(o.hi)-zl)+"%";tk.appendChild(z);
+  var mk=document.createElement("div");mk.className="tmk";mk.style.left=Math.max(2,Math.min(98,pc(o.val)))+"%";tk.appendChild(mk);
+  wrap.appendChild(tk);
+  var tl=document.createElement("div");tl.className="tl";
+  if(o.lo!==null){var a=document.createElement("span");a.style.left=pc(o.lo)+"%";a.textContent=o.lo.toFixed(o.dec);tl.appendChild(a);}
+  var b=document.createElement("span");b.style.left=pc(o.hi)+"%";b.textContent=(o.lo===null?"under ":"")+o.hi.toFixed(o.dec);tl.appendChild(b);
+  wrap.appendChild(tl);
+  if(o.note){var n=document.createElement("div");n.className="tn";n.textContent=o.note;wrap.appendChild(n);}
+  host.appendChild(wrap);
+}
+function msg(host,t){var d=document.createElement("div");d.className="tn";d.textContent=t;host.appendChild(d);}
+function renderTargets(){
+  var h=state.height;
+  var bb=document.getElementById("bwBars");bb.innerHTML="";
+  var lw=latestOf(state.bw,function(){return true;});
+  if(!h)msg(bb,"Set your height below to see your healthy weight range and BMI target.");
+  else if(!lw)msg(bb,"Add a weigh-in to see where you stand against your healthy range.");
+  else{
+    var k=h*h/703;
+    bar(bb,{title:"Weight",val:lw.v,unit:"lb",dec:1,lo:18.5*k,hi:25*k,note:"Healthy weight for your height (BMI 18.5 to 25). Latest: "+fmtD(lw.date)+"."});
+    bar(bb,{title:"BMI",val:bmiOf(lw.v),unit:"",dec:1,lo:18.5,hi:25,note:"Healthy BMI is 18.5 to under 25."});
+  }
+  var wb=document.getElementById("waistBars");wb.innerHTML="";
+  var lwa=latestOf(state.waist,function(){return true;});
+  if(!h)msg(wb,"Set your height (Body weight card) to see your healthy waist target.");
+  else if(!lwa)msg(wb,"Add a measurement to see your waist target. Healthy waist: under half your height.");
+  else bar(wb,{title:"Waist",val:lwa.v,unit:"in",dec:1,lo:0.4*h,hi:0.5*h,note:"Healthy waist is under half your height (ratio 0.4 to 0.49). Your ratio: "+(lwa.v/h).toFixed(2)+". Latest: "+fmtD(lwa.date)+"."});
+  var vb=document.getElementById("vBars");vb.innerHTML="";
+  var lh=latestOf(state.vit,function(x){return x.hr;}),lbp=latestOf(state.vit,function(x){return x.sys&&x.dia;});
+  if(!lh&&!lbp)msg(vb,"Add a reading to see it against the healthy range.");
+  if(lh)bar(vb,{title:"Heart rate",val:lh.hr,unit:"bpm",dec:0,lo:60,hi:100,hiIncl:true,note:"Normal resting range for adults is 60 to 100 bpm. Very fit people can run lower. Latest: "+fmtD(lh.date)+"."});
+  if(lbp){
+    bar(vb,{title:"Blood pressure, top number",val:lbp.sys,unit:"mmHg",dec:0,lo:null,hi:120,min:90,max:160});
+    bar(vb,{title:"Blood pressure, bottom number",val:lbp.dia,unit:"mmHg",dec:0,lo:null,hi:80,min:50,max:100});
+    var cat=(lbp.sys>=140||lbp.dia>=90)?"Stage 2 high":(lbp.sys>=130||lbp.dia>=80)?"Stage 1 high":(lbp.sys>=120)?"Elevated":"Normal";
+    var t="Latest "+lbp.sys+"/"+lbp.dia+" ("+fmtD(lbp.date)+"): "+cat+" by American Heart Association ranges. Healthy target is under 120/80.";
+    if(lbp.sys>180||lbp.dia>120)t+=" Readings above 180/120: rest 5 minutes and test again. If still that high, contact a doctor.";
+    msg(vb,t);
+  }
+}
 function bmiOf(lb){return state.height?703*lb/(state.height*state.height):null;}
 function bmiCat(b){return b<18.5?"Under":b<25?"Normal":b<30?"Over":"Obese";}
 function renderBody(){
@@ -510,7 +602,7 @@ function renderBody(){
     var older=bw[n-1-i-1];var r=document.createElement("div");r.className="lg";
     var bb=bmiOf(m.v);
     r.textContent=m.date+" · "+m.v+" lb"+(bb?" · BMI "+bb.toFixed(1):"")+(older?"  ("+((m.v-older.v)>0?"+":"")+(m.v-older.v).toFixed(1)+")":"");
-    bl.appendChild(r);
+    bl.appendChild(withDel(r,function(){state.bw=state.bw.filter(function(x){return x.date!==m.date;});save();}));
   });
 }
 function renderVitals(){
@@ -525,7 +617,7 @@ function renderVitals(){
   v.slice(-5).reverse().forEach(function(x){
     var r=document.createElement("div");r.className="lg";
     var bits=[];if(x.hr)bits.push(x.hr+" bpm");if(x.sys&&x.dia)bits.push(x.sys+"/"+x.dia+" mmHg");
-    r.textContent=x.date+" · "+bits.join(" · ");el.appendChild(r);
+    r.textContent=x.date+" · "+bits.join(" · ");el.appendChild(withDel(r,function(){state.vit=state.vit.filter(function(y){return y.date!==x.date;});save();}));
   });
 }
 var tInt=null;
@@ -556,10 +648,10 @@ document.getElementById("cycReset").onclick=function(){state.start=key(mondayOf(
 document.getElementById("bwAdd").onclick=function(){
   var inp=document.getElementById("bwIn"),v=parseFloat(inp.value);
   if(!(v>0))return;
-  var dk=key(new Date());
+  var dk=dateOf("bwDate");
   state.bw=state.bw.filter(function(x){return x.date!==dk;});
   state.bw.push({date:dk,v:v});state.bw.sort(function(a,b){return a.date<b.date?-1:1;});
-  addLog("bodyweight",dk,null,v);inp.value="";save();
+  addLog("bodyweight",dk,null,v);inp.value="";initDates();save();
 };
 document.getElementById("htSave").onclick=function(){
   var ft=parseFloat(document.getElementById("htFt").value),inch=parseFloat(document.getElementById("htIn").value)||0;
@@ -571,7 +663,7 @@ document.getElementById("vAdd").onclick=function(){
   var msg=document.getElementById("vMsg");msg.textContent="";
   var okHr=hr>=30&&hr<=220,okBp=sys>=70&&sys<=260&&dia>=40&&dia<=160&&sys>dia;
   if(!okHr&&!okBp){msg.textContent="Enter a heart rate (30–220) and/or both blood pressure numbers (top higher than bottom).";return;}
-  var dk=key(new Date()),rec=null;
+  var dk=dateOf("vDate"),rec=null;
   state.vit.forEach(function(x){if(x.date===dk)rec=x;});
   if(!rec){rec={date:dk};state.vit.push(rec);}
   if(okHr)rec.hr=hr;
@@ -579,15 +671,15 @@ document.getElementById("vAdd").onclick=function(){
   state.vit.sort(function(a,b){return a.date<b.date?-1:1;});
   addLog("vitals",dk,null,(okHr?hr+" bpm ":"")+(okBp?sys+"/"+dia:""));
   document.getElementById("vHrIn").value="";document.getElementById("vSysIn").value="";document.getElementById("vDiaIn").value="";
-  save();
+  initDates();save();
 };
 document.getElementById("waistAdd").onclick=function(){
   var inp=document.getElementById("waistIn"),v=parseFloat(inp.value);
   if(!(v>0))return;
-  var dk=key(new Date());
+  var dk=dateOf("waistDate");
   state.waist=state.waist.filter(function(x){return x.date!==dk;});
   state.waist.push({date:dk,v:v});state.waist.sort(function(a,b){return a.date<b.date?-1:1;});
-  addLog("waist",dk,null,v);inp.value="";save();
+  addLog("waist",dk,null,v);inp.value="";initDates();save();
 };
 document.getElementById("bkCopy").onclick=function(){
   var t=document.getElementById("bk");t.select();
@@ -603,7 +695,7 @@ document.getElementById("bkLoad").onclick=function(){
   }catch(e){note("That text is not a valid backup.");}
 };
 
-load();render();save();initCloud();
+load();initDates();render();save();initCloud();
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(function(){});}
 </script>
 </body>
