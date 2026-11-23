@@ -162,6 +162,25 @@ p{color:var(--mut);margin:6px 0}
     <div class="row"><button id="cycReset">Restart 4-week cycle this week</button></div>
   </div>
   <div class="card">
+    <h2>Body weight &amp; BMI</h2>
+    <div class="meta">Weigh at the same time of day, such as mornings. Pounds and inches.</div>
+    <div class="stats" style="margin-bottom:8px">
+      <div class="stat"><b id="bwNow">–</b><span>Weight (lb)</span></div>
+      <div class="stat"><b id="bmiNow">–</b><span id="bmiCat">BMI</span></div>
+      <div class="stat"><b id="bwChg">–</b><span>Since start</span></div>
+    </div>
+    <svg id="bwChart" viewBox="0 0 300 110" style="width:100%;height:110px;display:none"></svg>
+    <div class="row"><input class="num" id="bwIn" type="number" inputmode="decimal" step="0.1" placeholder="weight lb"><button id="bwAdd">Add</button></div>
+    <div class="row">
+      <span class="note" style="margin:0">Height:</span>
+      <input class="num" id="htFt" type="number" inputmode="numeric" placeholder="ft" style="width:70px">
+      <input class="num" id="htIn" type="number" inputmode="decimal" placeholder="in" style="width:70px">
+      <button id="htSave">Save</button>
+    </div>
+    <div id="bwList" style="margin-top:8px"></div>
+    <div class="note">BMI is a rough screening number. It does not separate muscle from fat, so also watch your waist and strength.</div>
+  </div>
+  <div class="card">
     <h2>Waist measurement</h2>
     <div class="meta">Measure at the navel, same time of day. Inches.</div>
     <div class="row"><input class="num" id="waistIn" type="number" inputmode="decimal" step="0.1" placeholder="inches"><button id="waistAdd">Add</button></div>
@@ -214,7 +233,7 @@ var PLAN={
 var CYCLE=["Week 1: choose repeatable loads; leave 2–3 reps in reserve.","Week 2: add 1–2 reps to sets while keeping good form.","Week 3: when all reps are comfortable, add a small amount of resistance.","Week 4: maintain the load or reduce sets slightly if tired. Then repeat the cycle."];
 var DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 var KEY="sixpack-tracker-v1";
-var state={done:{},ex:{},log:[],w:{},waist:[],start:null};
+var state={done:{},ex:{},log:[],w:{},waist:[],bw:[],height:null,start:null};
 var sel=key(new Date());
 
 function key(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -238,6 +257,7 @@ function load(){
   if(!Array.isArray(state.log))state.log=[];
   if(!state.w)state.w={};
   if(!Array.isArray(state.waist))state.waist=[];
+  if(!Array.isArray(state.bw))state.bw=[];
   if(!state.start)state.start=key(mondayOf(new Date()));
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 }
@@ -263,6 +283,10 @@ function merge(a){
   var ws={};state.waist.forEach(function(x){ws[x.date]=1;});
   (a.waist||[]).forEach(function(x){if(!ws[x.date])state.waist.push(x);});
   state.waist.sort(function(p,q){return p.date<q.date?-1:1;});
+  var bs={};state.bw.forEach(function(x){bs[x.date]=1;});
+  (a.bw||[]).forEach(function(x){if(!bs[x.date])state.bw.push(x);});
+  state.bw.sort(function(p,q){return p.date<q.date?-1:1;});
+  if(!state.height&&a.height)state.height=a.height;
 }
 function syncCloud(){if(!cloudDoc)return;try{cloudDoc.set({json:JSON.stringify(state)});}catch(e){}}
 function initCloud(){
@@ -406,6 +430,7 @@ function renderProg(){
     else{c.className="hc"+(state.done[kk]?" d":(sched(x)?"":" r"));c.textContent=x.getDate();}
     hi.appendChild(c);
   }
+  renderBody();
   var wl=document.getElementById("waistList");wl.innerHTML="";
   var ws=state.waist.slice(-5).reverse();
   if(!ws.length)wl.textContent="No measurements yet.";
@@ -425,11 +450,44 @@ function renderProg(){
     var what=x.type==="exercise"?((x.value?"Done: ":"Unchecked: ")+x.exercise):
              x.type==="weight"?("Weight: "+x.exercise+" "+x.value+" lb"):
              x.type==="waist"?("Waist: "+x.value+" in"):
+             x.type==="bodyweight"?("Body weight: "+x.value+" lb"):
              (x.value?"Session marked done":"Session undone");
     r.textContent=when+" · "+what;el.appendChild(r);
   });
 }
 
+function bmiOf(lb){return state.height?703*lb/(state.height*state.height):null;}
+function bmiCat(b){return b<18.5?"Under":b<25?"Normal":b<30?"Over":"Obese";}
+function renderBody(){
+  var bw=state.bw,n=bw.length;
+  var now=n?bw[n-1].v:null;
+  document.getElementById("bwNow").textContent=now!==null?now.toFixed(1):"–";
+  var b=now!==null?bmiOf(now):null;
+  document.getElementById("bmiNow").textContent=b!==null?b.toFixed(1):"–";
+  document.getElementById("bmiCat").textContent=b!==null?("BMI · "+bmiCat(b)):(now!==null?"BMI · set height":"BMI");
+  var ch=n>1?(now-bw[0].v):null;
+  document.getElementById("bwChg").textContent=ch!==null?((ch>0?"+":"")+ch.toFixed(1)):"–";
+  if(state.height){document.getElementById("htFt").value=Math.floor(state.height/12);document.getElementById("htIn").value=+(state.height%12).toFixed(1);}
+  var sv=document.getElementById("bwChart");
+  if(n>1){
+    var pts=bw.slice(-30),min=Math.min.apply(null,pts.map(function(p){return p.v;})),max=Math.max.apply(null,pts.map(function(p){return p.v;}));
+    if(max-min<1){max+=0.5;min-=0.5;}
+    var W=300,H=110,P=14,xs=function(i){return P+i*(W-2*P)/(pts.length-1);},ys=function(v){return H-P-(v-min)*(H-2*P)/(max-min);};
+    var d=pts.map(function(p,i){return (i?"L":"M")+xs(i).toFixed(1)+" "+ys(p.v).toFixed(1);}).join(" ");
+    var dots=pts.map(function(p,i){return '<circle cx="'+xs(i).toFixed(1)+'" cy="'+ys(p.v).toFixed(1)+'" r="3" fill="#c7a66a"/>';}).join("");
+    sv.innerHTML='<path d="'+d+'" fill="none" stroke="#c7a66a" stroke-width="2"/>'+dots+
+      '<text x="4" y="12" fill="#a9b3ab" font-size="10">'+max.toFixed(1)+'</text><text x="4" y="'+(H-3)+'" fill="#a9b3ab" font-size="10">'+min.toFixed(1)+'</text>';
+    sv.style.display="block";
+  }else{sv.style.display="none";}
+  var bl=document.getElementById("bwList");bl.innerHTML="";
+  if(!n)bl.textContent="No weigh-ins yet.";
+  bw.slice(-5).reverse().forEach(function(m,i){
+    var older=bw[n-1-i-1];var r=document.createElement("div");r.className="lg";
+    var bb=bmiOf(m.v);
+    r.textContent=m.date+" · "+m.v+" lb"+(bb?" · BMI "+bb.toFixed(1):"")+(older?"  ("+((m.v-older.v)>0?"+":"")+(m.v-older.v).toFixed(1)+")":"");
+    bl.appendChild(r);
+  });
+}
 var tInt=null;
 function startTimer(sec){
   var el=document.getElementById("timer");clearInterval(tInt);
@@ -455,6 +513,19 @@ document.getElementById("tabGuide").onclick=function(){tab("Guide");};
 document.getElementById("tabProg").onclick=function(){tab("Prog");};
 
 document.getElementById("cycReset").onclick=function(){state.start=key(mondayOf(new Date()));save();render();};
+document.getElementById("bwAdd").onclick=function(){
+  var inp=document.getElementById("bwIn"),v=parseFloat(inp.value);
+  if(!(v>0))return;
+  var dk=key(new Date());
+  state.bw=state.bw.filter(function(x){return x.date!==dk;});
+  state.bw.push({date:dk,v:v});state.bw.sort(function(a,b){return a.date<b.date?-1:1;});
+  addLog("bodyweight",dk,null,v);inp.value="";save();
+};
+document.getElementById("htSave").onclick=function(){
+  var ft=parseFloat(document.getElementById("htFt").value),inch=parseFloat(document.getElementById("htIn").value)||0;
+  if(!(ft>0))return;
+  state.height=ft*12+inch;save();
+};
 document.getElementById("waistAdd").onclick=function(){
   var inp=document.getElementById("waistIn"),v=parseFloat(inp.value);
   if(!(v>0))return;
@@ -472,7 +543,7 @@ document.getElementById("bkLoad").onclick=function(){
   try{
     var s=JSON.parse(document.getElementById("bk").value);
     if(!s||!s.done)throw 0;
-    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],start:s.start||key(mondayOf(new Date()))};
+    state={done:s.done,ex:s.ex||{},log:Array.isArray(s.log)?s.log:[],w:s.w||{},waist:Array.isArray(s.waist)?s.waist:[],bw:Array.isArray(s.bw)?s.bw:[],height:s.height||null,start:s.start||key(mondayOf(new Date()))};
     save();render();note("Restored.");
   }catch(e){note("That text is not a valid backup.");}
 };
